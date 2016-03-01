@@ -20,7 +20,7 @@ void Cache::map_to_cache(const std::string &key, std::string &value)
 	hashmap_[key] = value;
 }
 
-std::string Cache::query_cache()
+std::string Cache::query_cache(const std::string &word)
 {
 	HashMap_it iter = hashmap_.find(word);
 	if(iter != hashmap_.end())
@@ -45,6 +45,28 @@ void Cache::write_to_file(std::ofstream &fout)
 
 void Cache::read_from_file(const std::string &filename)
 {
-	
+	std::ifstream fin(filename.c_str());
+	if(!fin)
+	{
+		std::cout << "open cache file failed!\n" << std::endl;
+		return;
+	}
+
+	std::string key,value;
+	while(fin >> key >> value)
+	{
+		hashmap_.insert(make_pair(key,value));
+		std::count << key << "" << value <<std::endl;
+	}
+}
+
+void Cache::add_elements(const Cache &cache)
+{
+	MutexLockGuard guard(mutex_);
+	HashMap_cit hit = cache.hashmap_.begin();
+	for(; hit != cache.hashmap_.end(); ++hit)
+	{
+		hashmap_.insert(*hit);
+	}
 }
 }//end of namespace
