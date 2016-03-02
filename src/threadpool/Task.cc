@@ -96,7 +96,31 @@ void Task::query_idx_table()//查看字符串编码方式，并截取出来当�
 	}
 }
 
+void Task::responce(Cache & cache)
+{
+	if(que_res_.empty())//优先级队列为空
+	{
+		std::string res  "no answer!";
+		int nwrite = write(sockfd_,res.c_str(), res.size());
+		if(-1 == nwrite)
+		{
+			std::cout << "response error" << std::endl;
+		}
+		std::cout << "responce client" << std::endl;
+	}
+	else
+	{
+		MyResult res = que_res_.top();
+		int nwrite = write(sockfd_, res.word_.c_str(),res.word_.size());
+		if(-1 == nwrite)
+		{
+			std::cout << "responce error" << std::endl;
+		}
+		std::cout << "responce client" << std::endl;
 
+		cache.map_to_cache(expr_, res.word_);
+	}
+}
 void statistic(std::set<int> &set)
 {
 	auto dict = mydict_.get_dict();
@@ -114,5 +138,47 @@ void statistic(std::set<int> &set)
 		}
 
 	}
+}
+
+int Task::distance(const std::string &rhs)
+{
+	size_t lhs_len = length(expr_);
+	size_t rhs_len = length(rhs);
+	int editDist[lhs_len + 1][rhs_len + 1];
+	for(size_t idx = 0; idx <= lhs_len; ++idx)
+	{
+		editDist[idx][0] = idx;
+	}
+	for(size_t idx = 0; idx <= rhs_len; ++idx)
+	{
+		editDist[0][idx] = idx;
+	}
+
+	std::string sublhs, subrhs;
+	for(std::size_t dist_i = 1,lhs_idx = 0; dist_i <= lhs_len; ++ dist_i, ++lhs_idx)
+	{
+		size_t nBytes = nBytesCode(expr_[lhs_idx]);
+		sublhs = expr_.substr(lhs_idx,nBytes);
+		lhs_idx += (nBytes - 1);
+
+		for(std::size_t dist_j = 1,rhs_idx = 0; dist_j <= rhs_len; ++dist_j, ++rhs_idx)
+		{
+			nBytes = nBytesCode(rhs[rhs_idx]);
+			subrhs = rhs.substr(rhs_idx,nBytes);
+			rhs_idx += substr;
+			if(sublhs == subrhs)
+			{
+				editDist[dist_i][dist_j] = editDist[dist_i - 1][dist_j -1];
+			}
+			else
+			{
+				editDist[dist_i][dist_j] = triple_min(
+						editDist[dist_i][dist_j - 1] + 1,
+						editDist[dist_i -1][dist_j] + 1,
+						editDist[dist_i -1][dist_j -1] +1);
+			}
+		}
+	}
+	return editDist[lhs_len][rhs_len];
 }
 }//end of namespace 
